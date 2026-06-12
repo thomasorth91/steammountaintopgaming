@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steam Community Hub — Find players for any game</title>
+<meta name="description" content="Live Steam player counts, looking-for-group posts, session scheduling, and community chat for retro and mid-tier multiplayer games.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+:root{
+  --bg:       #080a0d;
+  --bg2:      #0f1115;
+  --bg3:      #16181e;
+  --bg4:      #1d2028;
+  --border:   rgba(255,255,255,0.06);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #e9ecf4;
+  --text2:    #8890a8;
+  --text3:    #50566a;
+  --mono:     'JetBrains Mono',monospace;
+  --sans:     'Inter',system-ui,sans-serif;
+  --r:        10px;
+  --r-sm:     6px;
+
+  /* section accent colors */
+  --lfg-a:    #22d55a;
+  --lfg-b:    #0af078;
+  --sched-a:  #a855f7;
+  --sched-b:  #e040fb;
+  --chat-a:   #f97316;
+  --chat-b:   #fbbf24;
+  --cnt-a:    #06b6d4;
+  --cnt-b:    #38bdf8;
+}
+
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+a{color:#5b8af0;text-decoration:none}
+input,textarea,select,button{font-family:var(--sans);font-size:13px}
+.container{max-width:1120px;margin:0 auto;padding:0 20px}
+
+/* ── scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── TOPNAV ── */
+.topnav{
+  background:rgba(8,10,13,0.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;
+}
+.topnav-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  height:54px;gap:16px;
+}
+.logo{
+  display:flex;align-items:center;gap:10px;
+  font-size:15px;font-weight:700;color:var(--text);text-decoration:none;
+}
+.logo svg{flex-shrink:0}
+.logo:hover{text-decoration:none}
+.logo-wordmark span{
+  background:linear-gradient(90deg,#22d55a,#06b6d4);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+.nav-stats{
+  display:flex;align-items:center;gap:20px;
+  font-size:12px;color:var(--text3);
+}
+.nav-stat-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 10px;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:20px;
+  font-size:11px;
+}
+.nav-stat-pill strong{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.ldot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--lfg-a);
+  animation:ldot-pulse 2s infinite;
+}
+@keyframes ldot-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,213,90,.4)}50%{opacity:.7;box-shadow:0 0 0 4px rgba(34,213,90,0)}}
+
+.identity-chip{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 12px;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:22px;
+  cursor:pointer;
+  font-size:12px;color:var(--text2);
+  transition:border-color .15s,background .15s;
+}
+.identity-chip:hover{background:var(--bg4);border-color:rgba(255,255,255,.2)}
+.av{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;flex-shrink:0;
+}
+
+/* ── HERO ── */
+.hero{
+  position:relative;overflow:hidden;
+  padding:40px 0 36px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 80% at 0% 50%, rgba(34,213,90,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 100% 30%, rgba(6,182,212,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 50% at 55% 80%, rgba(168,85,247,.05) 0%, transparent 60%);
+  pointer-events:none;
+}
+.hero-inner{display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;position:relative}
+.hero-text h1{
+  font-size:30px;font-weight:700;line-height:1.2;letter-spacing:-.5px;
+  margin-bottom:10px;
+}
+.hero-text h1 em{font-style:normal;background:linear-gradient(90deg,var(--lfg-a),var(--cnt-a));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-text p{font-size:14px;color:var(--text2);max-width:460px;line-height:1.7}
+.hero-stats{display:flex;gap:0;flex-wrap:wrap}
+.hero-stat{
+  text-align:center;padding:16px 24px;
+  border-left:1px solid var(--border);
+}
+.hero-stat:first-child{border-left:none}
+.hero-stat-n{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.hero-stat-l{font-size:10px;color:var(--text3);margin-top:3px;text-transform:uppercase;letter-spacing:.6px}
+
+/* ── MAIN NAV — the colorful pill grid ── */
+.main-nav{
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  padding:0;
+}
+.main-nav-inner{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:0;
+}
+.mnav-tile{
+  position:relative;
+  display:flex;align-items:center;gap:12px;
+  padding:16px 20px;
+  cursor:pointer;
+  background:transparent;
+  border:none;border-right:1px solid var(--border);
+  color:var(--text3);
+  font-size:13px;font-weight:500;
+  font-family:var(--sans);
+  transition:color .15s,background .15s;
+  text-align:left;
+  overflow:hidden;
+}
+.mnav-tile:last-child{border-right:none}
+.mnav-tile::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;height:2px;
+  opacity:0;transition:opacity .2s;
+}
+.mnav-tile:hover{background:var(--bg3);color:var(--text2)}
+.mnav-tile.on{color:var(--text);background:var(--bg3)}
+.mnav-tile.on::after{opacity:1}
+
+/* per-section accent lines */
+.mnav-tile[data-v="lfg"]::after      {background:linear-gradient(90deg,var(--lfg-a),var(--lfg-b))}
+.mnav-tile[data-v="schedule"]::after {background:linear-gradient(90deg,var(--sched-a),var(--sched-b))}
+.mnav-tile[data-v="chat"]::after     {background:linear-gradient(90deg,var(--chat-a),var(--chat-b))}
+.mnav-tile[data-v="counts"]::after   {background:linear-gradient(90deg,var(--cnt-a),var(--cnt-b))}
+
+.mnav-icon{
+  width:36px;height:36px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+  transition:transform .2s;
+}
+.mnav-tile:hover .mnav-icon,.mnav-tile.on .mnav-icon{transform:scale(1.08)}
+
+/* icon bg per section */
+.mnav-tile[data-v="lfg"]      .mnav-icon{background:linear-gradient(135deg,rgba(34,213,90,.18),rgba(10,240,120,.08));border:1px solid rgba(34,213,90,.2)}
+.mnav-tile[data-v="schedule"] .mnav-icon{background:linear-gradient(135deg,rgba(168,85,247,.18),rgba(224,64,251,.08));border:1px solid rgba(168,85,247,.2)}
+.mnav-tile[data-v="chat"]     .mnav-icon{background:linear-gradient(135deg,rgba(249,115,22,.18),rgba(251,191,36,.08));border:1px solid rgba(249,115,22,.2)}
+.mnav-tile[data-v="counts"]   .mnav-icon{background:linear-gradient(135deg,rgba(6,182,212,.18),rgba(56,189,248,.08));border:1px solid rgba(6,182,212,.2)}
+
+.mnav-text{}
+.mnav-label{font-size:13px;font-weight:600;color:inherit;line-height:1.2}
+.mnav-sub{font-size:11px;color:var(--text3);margin-top:1px;line-height:1.3}
+.mnav-tile.on .mnav-sub{color:var(--text3)}
+.mnav-badge{
+  margin-left:auto;
+  min-width:20px;height:20px;
+  padding:0 6px;
+  border-radius:10px;
+  font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  transition:background .2s,color .2s;
+}
+.mnav-tile[data-v="lfg"]      .mnav-badge.has{background:rgba(34,213,90,.15);color:var(--lfg-a)}
+.mnav-tile[data-v="schedule"] .mnav-badge.has{background:rgba(168,85,247,.15);color:var(--sched-a)}
+.mnav-tile[data-v="chat"]     .mnav-badge.has{background:rgba(249,115,22,.15);color:var(--chat-a)}
+.mnav-tile[data-v="counts"]   .mnav-badge.has{background:rgba(6,182,212,.15);color:var(--cnt-a)}
+.mnav-badge:not(.has){background:var(--bg4);color:var(--text3)}
+
+/* ── VIEWS ── */
+.view{display:none;padding:28px 0 60px}
+.view.on{display:block}
+
+/* view accent top bar */
+.view-accent-bar{
+  height:3px;width:100%;
+  margin-bottom:24px;
+  border-radius:0;
+}
+#view-lfg      .view-accent-bar{background:linear-gradient(90deg,var(--lfg-a),var(--lfg-b),transparent)}
+#view-schedule .view-accent-bar{background:linear-gradient(90deg,var(--sched-a),var(--sched-b),transparent)}
+#view-chat     .view-accent-bar{background:linear-gradient(90deg,var(--chat-a),var(--chat-b),transparent)}
+#view-counts   .view-accent-bar{background:linear-gradient(90deg,var(--cnt-a),var(--cnt-b),transparent)}
+
+/* ── section heading ── */
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;gap:12px}
+.sec-title{font-size:16px;font-weight:700}
+.sec-sub{font-size:12px;color:var(--text3)}
+.sec-action{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;padding:0}
+.sec-action:hover{color:var(--text2)}
+
+/* per-view sec-title color */
+#view-lfg      .sec-title{color:var(--lfg-a)}
+#view-schedule .sec-title{color:var(--sched-b)}
+#view-chat     .sec-title{color:var(--chat-b)}
+#view-counts   .sec-title{color:var(--cnt-b)}
+
+/* ── compose box ── */
+.compose{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:20px 22px;
+  margin-bottom:24px;
+  position:relative;
+  overflow:hidden;
+}
+.compose::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;
+}
+#view-lfg      .compose::before{background:linear-gradient(180deg,var(--lfg-a),var(--lfg-b))}
+#view-schedule .compose::before{background:linear-gradient(180deg,var(--sched-a),var(--sched-b))}
+#view-chat     .compose::before{background:linear-gradient(180deg,var(--chat-a),var(--chat-b))}
+#view-counts   .compose::before{background:linear-gradient(180deg,var(--cnt-a),var(--cnt-b))}
+.compose-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:14px}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.form-col{display:flex;flex-direction:column;gap:5px;flex:1;min-width:120px}
+.form-label{font-size:11px;color:var(--text3)}
+.f-input{
+  padding:9px 12px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none;
+  transition:border-color .15s;width:100%;
+}
+.f-input:focus{border-color:rgba(91,138,240,.5)}
+.f-input::placeholder{color:var(--text3)}
+textarea.f-input{resize:vertical;min-height:66px}
+select.f-input{cursor:pointer}
+
+/* ── buttons ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 18px;border-radius:var(--r-sm);
+  font-size:13px;font-weight:600;
+  cursor:pointer;border:1px solid transparent;
+  transition:opacity .15s,transform .1s;
+  white-space:nowrap;
+}
+.btn:active{transform:scale(.97)}
+.btn:hover{opacity:.88}
+
+.btn-lfg    {background:linear-gradient(135deg,var(--lfg-a),#0af078);color:#000}
+.btn-sched  {background:linear-gradient(135deg,var(--sched-a),var(--sched-b));color:#fff}
+.btn-chat   {background:linear-gradient(135deg,var(--chat-a),var(--chat-b));color:#000}
+.btn-counts {background:linear-gradient(135deg,var(--cnt-a),var(--cnt-b));color:#000}
+.btn-ghost  {background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:rgba(255,255,255,.25);color:var(--text)}
+.btn-green  {background:rgba(34,213,90,.12);color:var(--lfg-a);border:1px solid rgba(34,213,90,.25)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-xs{padding:3px 9px;font-size:11px}
+
+/* ── badges ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.badge-gray{background:var(--bg4);color:var(--text3);border:1px solid var(--border)}
+.badge-green{background:rgba(34,213,90,.1);color:var(--lfg-a)}
+.badge-purple{background:rgba(168,85,247,.1);color:var(--sched-b)}
+.badge-amber{background:rgba(249,115,22,.1);color:var(--chat-a)}
+
+/* ── LFG cards ── */
+.lfg-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px 18px;margin-bottom:10px;
+  transition:border-color .15s;
+}
+.lfg-card:hover{border-color:var(--border2)}
+.lfg-row{display:flex;gap:12px;align-items:flex-start}
+.lfg-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.lfg-body{flex:1;min-width:0}
+.lfg-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.lfg-name{font-size:13px;font-weight:600}
+.lfg-avail{font-size:11px}
+.lfg-time{font-size:11px;color:var(--text3)}
+.lfg-msg{font-size:13px;color:var(--text2);margin-bottom:8px;line-height:1.5}
+.game-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.game-chip{
+  font-size:11px;padding:3px 10px;border-radius:5px;
+  background:var(--bg3);color:var(--text2);border:1px solid var(--border);
+  cursor:pointer;transition:border-color .12s,color .12s;
+}
+.game-chip:hover{border-color:var(--lfg-a);color:var(--lfg-a)}
+.lfg-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.join-count{font-size:11px;color:var(--lfg-a);margin-left:4px}
+.lfg-ago{font-size:11px;color:var(--text3);margin-left:auto}
+
+/* ── schedule ── */
+.sched-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 18px;margin-bottom:8px;
+  display:flex;align-items:center;gap:14px;
+  transition:border-color .15s;
+}
+.sched-card:hover{border-color:var(--border2)}
+.sched-rank{font-size:16px;font-weight:700;color:var(--text3);min-width:26px;font-family:var(--mono)}
+.sched-body{flex:1;min-width:0}
+.sched-game{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
+.sched-meta{font-size:12px;color:var(--text3)}
+.vote-bar-wrap{flex:0 0 70px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.vote-bar-fill{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--sched-a),var(--sched-b));transition:width .4s ease}
+.vote-pct{font-size:12px;color:var(--sched-b);font-weight:500;min-width:34px;text-align:right;font-family:var(--mono)}
+.upvote-btn{
+  display:flex;align-items:center;gap:5px;padding:6px 12px;
+  border-radius:var(--r-sm);font-size:12px;font-weight:500;cursor:pointer;
+  background:transparent;border:1px solid var(--border);color:var(--text3);
+  transition:all .15s;
+}
+.upvote-btn:hover{border-color:rgba(168,85,247,.4);color:var(--sched-b)}
+.upvote-btn.voted{background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.3);color:var(--sched-b)}
+
+/* ── chat ── */
+.chat-wrap{display:grid;grid-template-columns:1fr 220px;gap:20px;align-items:start}
+@media(max-width:720px){.chat-wrap{grid-template-columns:1fr}}
+.chat-area{
+  height:380px;overflow-y:auto;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;
+  display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;
+}
+.chat-msg{display:flex;gap:10px;align-items:flex-start}
+.chat-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.chat-body .cn{font-size:12px;font-weight:600;color:var(--text)}
+.chat-body .ct{font-size:10px;color:var(--text3);margin-left:6px}
+.chat-body .cm{font-size:13px;color:var(--text2);margin-top:2px;line-height:1.5}
+.chat-input-row{display:flex;gap:8px;margin-top:10px}
+.trending-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.trending-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--chat-a);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.trend-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.trend-item:last-child{border-bottom:none}
+.trend-rank{font-size:12px;font-weight:700;color:var(--text3);min-width:20px;font-family:var(--mono)}
+.trend-name{font-size:12px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trend-ct{font-size:11px;color:var(--text3)}
+
+/* ── live counts ── */
+.counts-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search-input{
+  padding:7px 12px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none;width:200px;
+  transition:border-color .15s;
+}
+.search-input:focus{border-color:rgba(6,182,212,.5)}
+.search-input::placeholder{color:var(--text3)}
+.genre-filter{display:flex;gap:5px;flex-wrap:wrap}
+.gf-btn{
+  padding:4px 10px;font-size:11px;font-weight:500;border-radius:5px;
+  background:var(--bg3);color:var(--text3);border:1px solid var(--border);
+  cursor:pointer;transition:all .12s;
+}
+.gf-btn:hover{border-color:var(--border2);color:var(--text2)}
+.gf-btn.on{background:rgba(6,182,212,.12);color:var(--cnt-a);border-color:rgba(6,182,212,.3)}
+.prog-right{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3)}
+.prog-track{width:100px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.prog-fill{height:3px;background:linear-gradient(90deg,var(--cnt-a),var(--cnt-b));border-radius:2px;transition:width .2s}
+
+.pc-table{width:100%;border-collapse:collapse}
+.pc-table th{
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text3);padding:9px 12px;text-align:left;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:132px;background:var(--bg);z-index:2;cursor:pointer;
+}
+.pc-table th:hover{color:var(--text2)}
+.pc-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.pc-table tr:last-child td{border-bottom:none}
+.pc-table tbody tr:hover td{background:var(--bg2)}
+.pc-title{font-size:13px;font-weight:500;color:var(--text)}
+.pc-year{font-size:12px;color:var(--text3);font-family:var(--mono)}
+.cnt{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.cnt.hi {color:var(--lfg-a)}
+.cnt.md {color:#7fd4b0}
+.cnt.lo {color:var(--chat-a)}
+.cnt.vlo{color:var(--text3)}
+.cnt-lbl{font-size:10px;color:var(--text3);margin-top:1px;display:block}
+@keyframes shimmer{0%,100%{opacity:.2}50%{opacity:.5}}
+.cnt-loading{width:44px;height:13px;border-radius:3px;background:var(--bg3);animation:shimmer 1.2s ease-in-out infinite;display:inline-block}
+
+/* ── modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.on{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:28px;max-width:400px;width:100%;margin:20px}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.6}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+
+/* ── empty ── */
+.empty{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-icon{font-size:32px;margin-bottom:12px;opacity:.5}
+.empty p{font-size:13px;margin-top:5px;line-height:1.6}
+
+/* ── spin ── */
+.spin{animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="nameModal">
+  <div class="modal">
+    <div class="modal-title">Pick your name</div>
+    <div class="modal-sub">Shown on your LFG posts, votes, and chat messages. Visible to everyone in the community.</div>
+    <div class="form-col">
+      <div class="form-label">Display name</div>
+      <input class="f-input" id="modalNameInput" placeholder="e.g. FragHunter, RetroKing, NightOwl..." maxlength="24" onkeydown="if(event.key==='Enter')saveModalName()">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-lfg" onclick="saveModalName()">Save name</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOPNAV -->
+<nav class="topnav">
+  <div class="container topnav-inner">
+    <a href="#" class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect width="26" height="26" rx="7" fill="url(#lg)"/><path d="M7 13 C7 9.7 9.7 7 13 7 C16.3 7 19 9.7 19 13 C19 15.5 17.5 17.6 15.3 18.5 L11.2 14.4 C11.7 14.2 12 13.6 12 13 C12 12.1 11.3 11.4 10.4 11.4 C9.5 11.4 8.8 12.1 8.8 13" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round"/><defs><linearGradient id="lg" x1="0" y1="0" x2="26" y2="26" gradientUnits="userSpaceOnUse"><stop stop-color="#22d55a"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs></svg>
+      <span class="logo-wordmark">Steam<span> Hub</span></span>
+    </a>
+    <div class="nav-stats">
+      <div class="nav-stat-pill"><span class="ldot"></span><strong id="navOnline">—</strong>&nbsp;online</div>
+      <div class="nav-stat-pill"><strong id="navLFG">—</strong>&nbsp;LFG</div>
+      <div class="nav-stat-pill"><strong id="navChat">—</strong>&nbsp;messages</div>
+    </div>
+    <button class="identity-chip" onclick="openModal()">
+      <div class="av" id="navAv">?</div>
+      <span id="navName">Set name</span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-text">
+      <h1>Find players for <em>any game</em><br>in your Steam library</h1>
+      <p>Live player counts for 250+ multiplayer titles. Post your availability, vote on game nights, and chat with other players. Built for older games with dedicated communities.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-n" id="heroOnline">—</div><div class="hero-stat-l">players online</div></div>
+      <div class="hero-stat"><div class="hero-stat-n" id="heroGames">—</div><div class="hero-stat-l">games tracked</div></div>
+      <div class="hero-stat"><div class="hero-stat-n" id="heroLFG">—</div><div class="hero-stat-l">LFG posts</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN NAV -->
+<div class="main-nav">
+  <div class="container main-nav-inner">
+    <button class="mnav-tile on" id="tab-lfg" data-v="lfg" onclick="showView('lfg')">
+      <div class="mnav-icon">🎯</div>
+      <div class="mnav-text">
+        <div class="mnav-label">Looking for group</div>
+        <div class="mnav-sub">Post & find players now</div>
+      </div>
+      <div class="mnav-badge" id="badge-lfg">0</div>
+    </button>
+    <button class="mnav-tile" id="tab-schedule" data-v="schedule" onclick="showView('schedule')">
+      <div class="mnav-icon">🗓️</div>
+      <div class="mnav-text">
+        <div class="mnav-label">Schedule &amp; vote</div>
+        <div class="mnav-sub">Plan game nights</div>
+      </div>
+      <div class="mnav-badge" id="badge-schedule">0</div>
+    </button>
+    <button class="mnav-tile" id="tab-chat" data-v="chat" onclick="showView('chat')">
+      <div class="mnav-icon">💬</div>
+      <div class="mnav-text">
+        <div class="mnav-label">Community chat</div>
+        <div class="mnav-sub">Live &amp; trending topics</div>
+      </div>
+      <div class="mnav-badge" id="badge-chat">0</div>
+    </button>
+    <button class="mnav-tile" id="tab-counts" data-v="counts" onclick="showView('counts')">
+      <div class="mnav-icon">📊</div>
+      <div class="mnav-text">
+        <div class="mnav-label">Live player counts</div>
+        <div class="mnav-sub">Direct from Steam API</div>
+      </div>
+      <div class="mnav-badge" id="badge-counts">0</div>
+    </button>
+  </div>
+</div>
+
+<!-- VIEWS -->
+<div class="container">
+
+  <!-- LFG -->
+  <div class="view on" id="view-lfg">
+    <div class="view-accent-bar"></div>
+    <div class="compose">
+      <div class="compose-title">Post — I'm looking to play</div>
+      <div class="form-row">
+        <div class="form-col" style="flex:2">
+          <div class="form-label">Games you want to play <span style="color:var(--text3)">(comma separated)</span></div>
+          <input class="f-input" id="lfgGames" placeholder="Left 4 Dead 2, Vermintide 2, Payday 2...">
+        </div>
+        <div class="form-col" style="flex:0 0 155px">
+          <div class="form-label">Available</div>
+          <select class="f-input" id="lfgTime">
+            <option>Right now</option>
+            <option>Within 1 hour</option>
+            <option>Tonight</option>
+            <option>This weekend</option>
+            <option>Flexible</option>
+          </select>
+        </div>
+        <div class="form-col" style="flex:2">
+          <div class="form-label">Message <span style="color:var(--text3)">(optional)</span></div>
+          <input class="f-input" id="lfgMsg" placeholder="Any skill level welcome, voice chat preferred...">
+        </div>
+        <div style="flex-shrink:0;margin-top:auto">
+          <button class="btn btn-lfg" onclick="postLFG()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+            Post LFG
+          </button>
+        </div>
+      </div>
+      <div id="lfgStatus" style="font-size:12px;color:var(--text3);height:16px;margin-top:4px"></div>
+    </div>
+    <div class="sec-head">
+      <div><div class="sec-title">Active LFG posts</div><div class="sec-sub">Players looking for others right now</div></div>
+      <button class="sec-action" onclick="loadLFG()">↻ Refresh</button>
+    </div>
+    <div id="lfgFeed"><div class="empty"><div class="empty-icon">🎯</div><div style="font-size:15px;font-weight:600;color:var(--text2)">No LFG posts yet</div><p>Set your name above and tell the community what you want to play</p></div></div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="view" id="view-schedule">
+    <div class="view-accent-bar"></div>
+    <div class="compose">
+      <div class="compose-title">Propose a game session</div>
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-label">Game title</div>
+          <input class="f-input" id="schedGame" placeholder="Left 4 Dead 2, Vermintide 2...">
+        </div>
+        <div class="form-col">
+          <div class="form-label">Proposed date / time</div>
+          <input class="f-input" id="schedDate" placeholder="Saturday 8pm EST, Sunday afternoon...">
+        </div>
+        <div class="form-col">
+          <div class="form-label">Details <span style="color:var(--text3)">(optional)</span></div>
+          <input class="f-input" id="schedNote" placeholder="4-player co-op, any skill level...">
+        </div>
+        <div style="flex-shrink:0;margin-top:auto">
+          <button class="btn btn-sched" onclick="proposeSession()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Propose
+          </button>
+        </div>
+      </div>
+      <div id="schedStatus" style="font-size:12px;color:var(--text3);height:16px;margin-top:4px"></div>
+    </div>
+    <div class="sec-head">
+      <div><div class="sec-title">Community votes</div><div class="sec-sub">Sorted by most popular — click to upvote</div></div>
+      <button class="sec-action" onclick="loadSchedule()">↻ Refresh</button>
+    </div>
+    <div id="schedFeed"><div class="empty"><div class="empty-icon">📅</div><div style="font-size:15px;font-weight:600;color:var(--text2)">No sessions proposed yet</div><p>Propose a game night above and let the community vote</p></div></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="view" id="view-chat">
+    <div class="view-accent-bar"></div>
+    <div class="sec-head" style="margin-bottom:14px">
+      <div><div class="sec-title">Community chat</div><div class="sec-sub"><span class="ldot" style="margin-right:4px"></span>Live · game mentions surface as trending topics</div></div>
+      <button class="sec-action" onclick="loadChat()">↻ Refresh</button>
+    </div>
+    <div class="chat-wrap">
+      <div>
+        <div class="chat-area" id="chatArea">
+          <div class="empty" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div class="empty-icon">💬</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text2)">No messages yet</div>
+            <p>Start the conversation — mention games you're playing</p>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input class="f-input" id="chatInput" placeholder="Message the community… mention a game to surface it as trending" maxlength="200" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-chat btn-sm" onclick="sendChat()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+            Send
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="trending-panel">
+          <div class="trending-title">🔥 Trending now</div>
+          <div id="trendingList"><div style="font-size:12px;color:var(--text3);padding:6px 0">Mentions appear here as people chat</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COUNTS -->
+  <div class="view" id="view-counts">
+    <div class="view-accent-bar"></div>
+    <div class="sec-head">
+      <div><div class="sec-title">Live player counts</div><div class="sec-sub">Direct from Steam API · no API key · auto-refreshes every 2 min</div></div>
+    </div>
+    <div class="counts-toolbar">
+      <input class="search-input" id="countSearch" placeholder="Search games..." oninput="renderCountTable()">
+      <div class="genre-filter" id="genreFilter"></div>
+      <div class="prog-right">
+        <span id="progText">Ready</span>
+        <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        <button class="btn btn-ghost btn-sm" id="refreshCountBtn" onclick="refreshCounts()">↻ Refresh</button>
+      </div>
+    </div>
+    <table class="pc-table">
+      <thead><tr>
+        <th onclick="sortCounts('title')">Game ↕</th>
+        <th>Genre</th>
+        <th onclick="sortCounts('year')">Year ↕</th>
+        <th onclick="sortCounts('count')" style="text-align:right">Players now ↓</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="countBody"></tbody>
+    </table>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+/* Supabase loaded dynamically to avoid CDN tracking blocks */
+var sb = null;
+var sbReady = false;
+
+async function initSupabase() {
+  try {
+    /* Try multiple CDN sources */
+    var sources = [
+      "https://esm.sh/@supabase/supabase-js@2",
+      "https://cdn.skypack.dev/@supabase/supabase-js@2",
+      "https://unpkg.com/@supabase/supabase-js@2/dist/module/index.js"
+    ];
+    var mod = null;
+    for(var i=0;i<sources.length;i++){
+      try{ mod = await import(sources[i]); break; }catch(e){ continue; }
+    }
+    if(mod){
+      var createClient = mod.createClient || (mod.default && mod.default.createClient);
+      if(createClient){
+        sb = createClient(
+          "https://dngskagniebljpyhagz.supabase.co",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuZ3NrYWduaWVibGZqcHloYWd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMTk2MjQsImV4cCI6MjA5Njc5NTYyNH0.VuE8iVBkP4wBtXrAvHrOPfuSczFcStVPeC2K_egJ25c"
+        );
+        console.log("Supabase connected via", sources[i]);
+      }
+    }
+  } catch(e) {
+    console.warn("Supabase unavailable, using localStorage:", e.message);
+  }
+  sbReady = true;
+  bootApp();
+}
+
+var myName  = localStorage.getItem("schub_name")  || "";
+var myColor = localStorage.getItem("schub_color") || genColor();
+function genColor(){var c=["#22d55a","#5b8af0","#f97316","#a855f7","#06b6d4","#fbbf24","#e85d5d"];var v=c[Math.floor(Math.random()*c.length)];localStorage.setItem("schub_color",v);return v;}
+function initials(n){return n?(n.trim().split(" ").map(function(w){return w[0];}).join("").toUpperCase().slice(0,2)):"?";}
+function renderIdentity(){
+  var av=document.getElementById("navAv");
+  av.textContent=myName?initials(myName):"?";
+  av.style.background=myColor+"22";av.style.color=myColor;
+  document.getElementById("navName").textContent=myName||"Set name";
+}
+function openModal(){document.getElementById("nameModal").classList.add("on");if(myName)document.getElementById("modalNameInput").value=myName;setTimeout(function(){document.getElementById("modalNameInput").focus();},100);}
+function closeModal(){document.getElementById("nameModal").classList.remove("on");}
+function saveModalName(){var v=document.getElementById("modalNameInput").value.trim();if(!v)return;myName=v;localStorage.setItem("schub_name",myName);renderIdentity();closeModal();}
+document.getElementById("nameModal").addEventListener("click",function(e){if(e.target===this)closeModal();});
+
+async function dbGet(table){
+  if(sb){
+    try{var {data,error}=await sb.from(table).select("*").order("created_at",{ascending:true});if(error)throw error;return data||[];}
+    catch(e){console.warn("dbGet failed",table,e);return[];}
+  }
+  try{return JSON.parse(localStorage.getItem("schub_"+table)||"[]");}catch(e){return[];}
+}
+async function dbInsert(table,row){
+  if(sb){
+    try{await sb.from(table).insert(row);}catch(e){console.warn("dbInsert failed",e);}
+    return;
+  }
+  var rows=await dbGet(table);
+  rows.push({...row,id:Date.now()+"",created_at:new Date().toISOString()});
+  if(rows.length>200)rows=rows.slice(-200);
+  localStorage.setItem("schub_"+table,JSON.stringify(rows));
+}
+async function dbUpdate(table,id,updates){
+  if(sb){
+    try{await sb.from(table).update(updates).eq("id",id);}catch(e){console.warn("dbUpdate failed",e);}
+    return;
+  }
+  var rows=await dbGet(table);
+  var idx=rows.findIndex(function(r){return r.id==id;});
+  if(idx>=0)rows[idx]={...rows[idx],...updates};
+  localStorage.setItem("schub_"+table,JSON.stringify(rows));
+}
+
+var VIEWS=["lfg","schedule","chat","counts"];
+function showView(v){
+  VIEWS.forEach(function(k){
+    document.getElementById("view-"+k).classList.toggle("on",k===v);
+    var tab=document.getElementById("tab-"+k);
+    tab.classList.toggle("on",k===v);
+  });
+  if(v==="lfg")loadLFG();
+  if(v==="schedule")loadSchedule();
+  if(v==="chat")loadChat();
+  if(v==="counts"){buildGenreFilter();renderCountTable();if(!Object.keys(fetchState).length)refreshCounts();}
+}
+
+function setBadge(id, n){
+  var el=document.getElementById("badge-"+id);
+  el.textContent=n;
+  el.className="mnav-badge"+(n>0?" has":"");
+}
+
+async function loadLFG(){
+  var posts=await dbGet("lfg_posts");
+  document.getElementById("navLFG").textContent=posts.length;
+  document.getElementById("heroLFG").textContent=posts.length;
+  setBadge("lfg",posts.length);
+  if(!posts.length){document.getElementById("lfgFeed").innerHTML='<div class="empty"><div class="empty-icon">🎯</div><div style="font-size:15px;font-weight:600;color:var(--text2)">No LFG posts yet</div><p>Set your name and post what you want to play</p></div>';return;}
+  var html=posts.slice().reverse().map(function(p){
+    var games=Array.isArray(p.games)?p.games:[];
+    var chips=games.map(function(g){return'<span class="game-chip" onclick="goLFG('+JSON.stringify(g)+')" title="LFG: '+esc(g)+'">'+esc(g)+'</span>';}).join("");
+    var dot=p.availability==="Right now"?'<span style="color:var(--lfg-a);font-size:11px">● </span>':'<span style="color:var(--chat-a);font-size:11px">◌ </span>';
+    var joins=p.joins||[];
+    return'<div class="lfg-card"><div class="lfg-row">'
+      +'<div class="lfg-av" style="background:'+esc(p.color||"#22d55a")+'22;color:'+esc(p.color||"#22d55a")+'">'+initials(p.name)+'</div>'
+      +'<div class="lfg-body">'
+        +'<div class="lfg-meta"><span class="lfg-name" style="color:'+esc(p.color||"#22d55a")+'">'+esc(p.name)+'</span>'
+        +'<span class="lfg-avail">'+dot+esc(p.availability)+'</span></div>'
+        +(p.msg?'<div class="lfg-msg">'+esc(p.msg)+'</div>':'')
+        +'<div class="game-chips">'+chips+'</div>'
+        +'<div class="lfg-actions">'
+          +'<button class="btn btn-green btn-xs" onclick="joinLFG('+JSON.stringify(p.id)+')">✋ I\'m in!</button>'
+          +'<button class="btn btn-ghost btn-xs" onclick="replyLFG('+JSON.stringify(p.name)+','+JSON.stringify(games[0]||"")+')">💬 Chat</button>'
+          +(joins.length?'<span class="join-count">'+joins.length+' joined</span>':'')
+          +'<span class="lfg-ago">'+relTime(p.created_at)+'</span>'
+        +'</div>'
+      +'</div></div></div>';
+  }).join("");
+  document.getElementById("lfgFeed").innerHTML=html;
+}
+
+async function postLFG(){
+  if(!myName){openModal();return;}
+  var games=document.getElementById("lfgGames").value.split(",").map(function(g){return g.trim();}).filter(Boolean);
+  if(!games.length){alert("Enter at least one game.");return;}
+  var msg=document.getElementById("lfgMsg").value.trim();
+  var avail=document.getElementById("lfgTime").value;
+  document.getElementById("lfgStatus").textContent="Posting...";
+  await dbInsert("lfg_posts",{name:myName,color:myColor,games:games,msg:msg,availability:avail,joins:[]});
+  document.getElementById("lfgGames").value="";document.getElementById("lfgMsg").value="";
+  document.getElementById("lfgStatus").textContent="✓ Posted!";
+  setTimeout(function(){document.getElementById("lfgStatus").textContent="";},2500);
+  games.forEach(bumpTrend);loadLFG();
+}
+async function joinLFG(id){
+  if(!myName){openModal();return;}
+  var posts=await dbGet("lfg_posts");
+  var p=posts.find(function(x){return x.id==id;});
+  if(!p)return;
+  var joins=p.joins||[];
+  if(!joins.includes(myName))joins.push(myName);
+  await dbUpdate("lfg_posts",id,{joins:joins});loadLFG();
+}
+function replyLFG(name,game){
+  showView("chat");
+  document.getElementById("chatInput").value="@"+name+" — I also own "+game+", I'm in! ";
+  document.getElementById("chatInput").focus();
+}
+
+async function loadSchedule(){
+  var sessions=await dbGet("schedule");
+  setBadge("schedule",sessions.length);
+  if(!sessions.length){document.getElementById("schedFeed").innerHTML='<div class="empty"><div class="empty-icon">📅</div><div style="font-size:15px;font-weight:600;color:var(--text2)">No sessions proposed yet</div><p>Propose a game night above and let the community vote</p></div>';return;}
+  var total=sessions.reduce(function(a,s){return a+(s.votes||0);},0)||1;
+  var sorted=sessions.slice().sort(function(a,b){return(b.votes||0)-(a.votes||0);});
+  var html=sorted.map(function(s,i){
+    var pct=Math.round(((s.votes||0)/total)*100);
+    var voted=(s.voted_by||[]).includes(myName);
+    return'<div class="sched-card">'
+      +'<div class="sched-rank">#'+(i+1)+'</div>'
+      +'<div class="sched-body"><div class="sched-game">'+esc(s.game)+'</div>'
+        +'<div class="sched-meta">'+esc(s.date)+(s.note?' · '+esc(s.note):'')+'<span style="margin-left:8px">by <span style="color:'+esc(s.color||"#a855f7")+'">'+esc(s.name)+'</span></span></div></div>'
+      +'<div class="vote-bar-wrap"><div class="vote-bar-fill" style="width:'+pct+'%"></div></div>'
+      +'<div class="vote-pct">'+pct+'%</div>'
+      +'<button class="upvote-btn'+(voted?" voted":"")+'\" onclick="voteSession('+JSON.stringify(s.id)+')">'
+        +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>'
+        +(s.votes||0)
+      +'</button></div>';
+  }).join("");
+  document.getElementById("schedFeed").innerHTML=html;
+}
+async function proposeSession(){
+  if(!myName){openModal();return;}
+  var game=document.getElementById("schedGame").value.trim();
+  var date=document.getElementById("schedDate").value.trim();
+  var note=document.getElementById("schedNote").value.trim();
+  if(!game||!date){alert("Enter a game and proposed time.");return;}
+  document.getElementById("schedStatus").textContent="Saving...";
+  await dbInsert("schedule",{name:myName,color:myColor,game:game,date:date,note:note,votes:1,voted_by:[myName]});
+  document.getElementById("schedGame").value="";document.getElementById("schedDate").value="";document.getElementById("schedNote").value="";
+  document.getElementById("schedStatus").textContent="✓ Proposed!";
+  setTimeout(function(){document.getElementById("schedStatus").textContent="";},2500);
+  bumpTrend(game);loadSchedule();
+}
+async function voteSession(id){
+  if(!myName){openModal();return;}
+  var sessions=await dbGet("schedule");
+  var s=sessions.find(function(x){return x.id==id;});if(!s)return;
+  var vb=s.voted_by||[];
+  if(vb.includes(myName)){vb=vb.filter(function(v){return v!==myName;});await dbUpdate("schedule",id,{votes:Math.max(0,(s.votes||0)-1),voted_by:vb});}
+  else{vb.push(myName);await dbUpdate("schedule",id,{votes:(s.votes||0)+1,voted_by:vb});}
+  loadSchedule();
+}
+
+async function loadChat(){
+  var msgs=await dbGet("chat");
+  setBadge("chat",msgs.length);
+  document.getElementById("navChat").textContent=msgs.length;
+  if(!msgs.length){
+    document.getElementById("chatArea").innerHTML='<div class="empty" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="empty-icon">💬</div><div style="font-size:14px;font-weight:600;color:var(--text2)">No messages yet</div><p>Start the conversation</p></div>';
+    renderTrending(msgs);return;
+  }
+  var html=msgs.slice(-80).map(function(m){
+    return'<div class="chat-msg">'
+      +'<div class="chat-av" style="background:'+esc(m.color||"#f97316")+'22;color:'+esc(m.color||"#f97316")+'">'+initials(m.name)+'</div>'
+      +'<div class="chat-body"><span class="cn" style="color:'+esc(m.color||"#f97316")+'">'+esc(m.name)+'</span><span class="ct">'+relTime(m.created_at)+'</span><div class="cm">'+esc(m.text)+'</div></div>'
+    +'</div>';
+  }).join("");
+  var area=document.getElementById("chatArea");area.innerHTML=html;area.scrollTop=area.scrollHeight;
+  renderTrending(msgs);
+}
+async function sendChat(){
+  if(!myName){openModal();return;}
+  var t=document.getElementById("chatInput").value.trim();if(!t)return;
+  await dbInsert("chat",{name:myName,color:myColor,text:t});
+  document.getElementById("chatInput").value="";
+  GAMES.forEach(function(g){var s=g.t.split(":")[0].replace(/\s+\d+$/,"").toLowerCase();if(t.toLowerCase().includes(s))bumpTrend(g.t);});
+  loadChat();
+}
+var trendMap={};
+function bumpTrend(topic){if(!topic)return;trendMap[topic]=(trendMap[topic]||0)+1;}
+function renderTrending(msgs){
+  var counts={};
+  msgs.slice(-100).forEach(function(m){
+    GAMES.forEach(function(g){var s=g.t.split(":")[0].replace(/\s+\d+$/,"").toLowerCase();if(m.text&&m.text.toLowerCase().includes(s))counts[g.t]=(counts[g.t]||0)+1;});
+  });
+  Object.entries(trendMap).forEach(function(e){counts[e[0]]=(counts[e[0]]||0)+e[1];});
+  var sorted=Object.entries(counts).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+  if(!sorted.length){document.getElementById("trendingList").innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0">Mentions appear here as people chat</div>';return;}
+  document.getElementById("trendingList").innerHTML=sorted.map(function(e,i){
+    var fire=e[1]>=5?"🔥":e[1]>=3?"⚡":"·";
+    return'<div class="trend-item"><span class="trend-rank">#'+(i+1)+'</span><span class="trend-name">'+esc(e[0])+'</span><span class="trend-ct">'+e[1]+' '+fire+'</span></div>';
+  }).join("");
+}
+
+var liveCounts={},fetchState={},countSortCol="count",countSortDir=-1,activeGenre="All";
+var GAMES=[
+/* ── FPS ── */
+{id:10,    t:"Counter-Strike",                     g:"FPS",       y:1999},
+{id:240,   t:"Counter-Strike: Source",              g:"FPS",       y:2004},
+{id:70,    t:"Half-Life",                           g:"FPS",       y:1998},
+{id:320,   t:"Half-Life 2: Deathmatch",             g:"FPS",       y:2004},
+{id:2200,  t:"Quake III Arena",                     g:"FPS",       y:1999},
+{id:2310,  t:"Quake II",                            g:"FPS",       y:1997},
+{id:282440,t:"Quake Live",                          g:"FPS",       y:2010},
+{id:9200,  t:"Unreal Tournament 3",                 g:"FPS",       y:2007},
+{id:13230, t:"Unreal Tournament 2004",              g:"FPS",       y:2004},
+{id:1250,  t:"Killing Floor",                       g:"FPS",       y:2009},
+{id:379430,t:"Killing Floor 2",                     g:"FPS",       y:2015},
+{id:222880,t:"Insurgency",                          g:"FPS",       y:2014},
+{id:362890,t:"Black Mesa",                          g:"FPS",       y:2015},
+{id:41070, t:"Serious Sam HD: First Encounter",     g:"FPS",       y:2009},
+{id:41080, t:"Serious Sam HD: Second Encounter",    g:"FPS",       y:2010},
+{id:257350,t:"Serious Sam 3: BFE",                  g:"FPS",       y:2011},
+{id:107410,t:"Arma 3",                              g:"FPS",       y:2013},
+{id:91700, t:"Brink",                               g:"FPS",       y:2011},
+{id:7940,  t:"Call of Duty 4: Modern Warfare",      g:"FPS",       y:2007},
+{id:10190, t:"Call of Duty: Modern Warfare 2",      g:"FPS",       y:2009},
+{id:42700, t:"Call of Duty: Black Ops",             g:"FPS",       y:2010},
+{id:202970,t:"Call of Duty: Black Ops II",          g:"FPS",       y:2012},
+{id:311210,t:"Call of Duty: Black Ops III",         g:"FPS",       y:2015},
+{id:48700, t:"Battlefield 3",                       g:"FPS",       y:2011},
+{id:1238820,t:"Battlefield 4",                      g:"FPS",       y:2013},
+{id:374040,t:"Battlefield: Bad Company 2",          g:"FPS",       y:2010},
+{id:108800,t:"Chivalry: Medieval Warfare",          g:"FPS",       y:2012},
+{id:319630,t:"Chivalry 2",                          g:"FPS",       y:2021},
+{id:433090,t:"Space Hulk: Deathwing",               g:"FPS",       y:2016},
+{id:234450,t:"Sniper Elite 3",                      g:"FPS",       y:2014},
+{id:312670,t:"Sniper Elite 4",                      g:"FPS",       y:2017},
+{id:245390,t:"Sniper Elite V2 Remastered",          g:"FPS",       y:2019},
+{id:17410, t:"Nuclear Dawn",                        g:"FPS",       y:2011},
+{id:322500,t:"Warhammer: Vermintide",               g:"FPS",       y:2015},
+{id:552500,t:"Warhammer: Vermintide 2",             g:"FPS",       y:2018},
+{id:233820,t:"Contagion",                           g:"FPS",       y:2013},
+{id:208090,t:"Strike Vector",                       g:"FPS",       y:2014},
+{id:219740,t:"Sanctum 2",                           g:"FPS",       y:2013},
+{id:24180, t:"Section 8: Prejudice",                g:"FPS",       y:2011},
+{id:55230, t:"Gotham City Impostors",               g:"FPS",       y:2012},
+{id:261550,t:"Insurgency: Modern Infantry Combat",  g:"FPS",       y:2012},
+{id:203160,t:"Payday 2",                            g:"FPS",       y:2013},
+{id:602960,t:"Payday 3",                            g:"FPS",       y:2023},
+{id:49520, t:"Borderlands 2",                       g:"FPS",       y:2012},
+{id:397540,t:"Borderlands 3",                       g:"FPS",       y:2019},
+{id:304390,t:"Borderlands: The Pre-Sequel",         g:"FPS",       y:2014},
+{id:267300,t:"Dying Light",                         g:"FPS",       y:2015},
+{id:239200,t:"Dying Light 2: Stay Human",           g:"FPS",       y:2022},
+{id:550,   t:"Left 4 Dead 2",                       g:"FPS",       y:2009},
+{id:500,   t:"Left 4 Dead",                         g:"FPS",       y:2008},
+{id:1085510,t:"Ghostrunner",                        g:"FPS",       y:2020},
+{id:17520, t:"Synergy",                             g:"FPS",       y:2010},
+/* ── TPS ── */
+{id:209000,t:"Warframe",                            g:"TPS",       y:2013},
+{id:238430,t:"Warhammer 40K: Space Marine",         g:"TPS",       y:2011},
+{id:218230,t:"Batman: Arkham Origins",              g:"TPS",       y:2013},
+{id:601150,t:"Devil May Cry 5",                     g:"TPS",       y:2019},
+{id:365590,t:"Minimum",                             g:"TPS",       y:2014},
+{id:263450,t:"Goat Simulator",                      g:"TPS",       y:2014},
+{id:381210,t:"Dead by Daylight",                    g:"TPS",       y:2016},
+{id:394230,t:"Helldivers 2",                        g:"TPS",       y:2024},
+{id:374520,t:"Helldivers",                          g:"TPS",       y:2015},
+{id:617290,t:"Remnant: From the Ashes",             g:"TPS",       y:2019},
+{id:1282100,t:"Remnant II",                         g:"TPS",       y:2023},
+{id:680420,t:"Outriders",                           g:"TPS",       y:2021},
+{id:870720,t:"Control",                             g:"TPS",       y:2019},
+{id:346010,t:"Guns of Icarus Online",               g:"TPS",       y:2012},
+{id:748490,t:"Deep Rock Galactic",                  g:"TPS",       y:2018},
+{id:936440,t:"GTFO",                                g:"TPS",       y:2021},
+{id:976730,t:"Halo: MCC",                           g:"TPS",       y:2019},
+/* ── Fighting ── */
+{id:1161580,t:"Street Fighter 30th Anniversary",    g:"Fighting",  y:2018},
+{id:603770,t:"Street Fighter V",                    g:"Fighting",  y:2016},
+{id:312860,t:"Ultra Street Fighter IV",             g:"Fighting",  y:2014},
+{id:323370,t:"King of Fighters XIII",               g:"Fighting",  y:2013},
+{id:1070840,t:"Samurai Shodown",                    g:"Fighting",  y:2019},
+{id:275390,t:"Mortal Kombat X",                     g:"Fighting",  y:2015},
+{id:718820,t:"Mortal Kombat 11",                    g:"Fighting",  y:2019},
+{id:1173780,t:"Tekken 7",                           g:"Fighting",  y:2017},
+{id:246900,t:"Skullgirls 2nd Encore",               g:"Fighting",  y:2013},
+{id:383120,t:"Nidhogg",                             g:"Fighting",  y:2014},
+{id:462770,t:"Nidhogg 2",                           g:"Fighting",  y:2017},
+{id:1097150,t:"Guilty Gear Strive",                 g:"Fighting",  y:2021},
+{id:520440,t:"BlazBlue: Centralfiction",            g:"Fighting",  y:2016},
+{id:870780,t:"Jump Force",                          g:"Fighting",  y:2019},
+{id:574460,t:"Injustice 2",                         g:"Fighting",  y:2017},
+{id:245550,t:"Injustice: Gods Among Us",            g:"Fighting",  y:2013},
+{id:536880,t:"Dragon Ball FighterZ",                g:"Fighting",  y:2018},
+{id:1029210,t:"Granblue Fantasy Versus",            g:"Fighting",  y:2020},
+{id:214770,t:"Brawlhalla",                          g:"Fighting",  y:2017},
+{id:333600,t:"Rivals of Aether",                    g:"Fighting",  y:2017},
+{id:365000,t:"Divekick",                            g:"Fighting",  y:2013},
+{id:45760, t:"Battleblock Theater",                 g:"Fighting",  y:2013},
+/* ── Racing ── */
+{id:221900,t:"Grid 2",                              g:"Racing",    y:2013},
+{id:310560,t:"Dirt Rally",                          g:"Racing",    y:2015},
+{id:690790,t:"Dirt Rally 2.0",                      g:"Racing",    y:2019},
+{id:228380,t:"Project CARS",                        g:"Racing",    y:2015},
+{id:393380,t:"Project CARS 2",                      g:"Racing",    y:2017},
+{id:1240440,t:"Wreckfest",                          g:"Racing",    y:2018},
+{id:655500,t:"Road Redemption",                     g:"Racing",    y:2017},
+{id:524220,t:"Assetto Corsa",                       g:"Racing",    y:2014},
+{id:805550,t:"Assetto Corsa Competizione",          g:"Racing",    y:2018},
+{id:39000, t:"Trackmania Nations Forever",          g:"Racing",    y:2008},
+{id:203550,t:"Burnout Paradise Remastered",         g:"Racing",    y:2018},
+{id:460930,t:"NFS: Hot Pursuit Remastered",         g:"Racing",    y:2020},
+{id:24010, t:"Race Driver: Grid",                   g:"Racing",    y:2008},
+{id:359220,t:"DiRT 4",                              g:"Racing",    y:2017},
+{id:863550,t:"F1 2019",                             g:"Racing",    y:2019},
+{id:929290,t:"F1 2020",                             g:"Racing",    y:2020},
+{id:1259970,t:"F1 2021",                            g:"Racing",    y:2021},
+{id:252950,t:"Rocket League",                       g:"Racing",    y:2015},
+/* ── RTS ── */
+{id:813780,t:"Age of Empires II: DE",               g:"RTS",       y:2019},
+{id:1466860,t:"Age of Empires IV",                  g:"RTS",       y:2021},
+{id:228880,t:"Age of Empires III: DE",              g:"RTS",       y:2020},
+{id:1089130,t:"Age of Empires: DE",                 g:"RTS",       y:2018},
+{id:20900, t:"Supreme Commander: Forged Alliance",  g:"RTS",       y:2007},
+{id:20920, t:"Supreme Commander 2",                 g:"RTS",       y:2010},
+{id:214970,t:"Wargame: AirLand Battle",             g:"RTS",       y:2013},
+{id:298610,t:"Wargame: Red Dragon",                 g:"RTS",       y:2014},
+{id:48230, t:"Wargame: European Escalation",        g:"RTS",       y:2012},
+{id:34010, t:"Demigod",                             g:"RTS",       y:2009},
+{id:24740, t:"Battlestations: Pacific",             g:"RTS",       y:2009},
+{id:265630,t:"Divinity: Dragon Commander",          g:"RTS",       y:2013},
+{id:204060,t:"Dungeon Defenders",                   g:"RTS",       y:2010},
+{id:214490,t:"Dungeon Defenders II",                g:"RTS",       y:2015},
+{id:219740,t:"Sanctum 2",                           g:"RTS",       y:2013},
+{id:251060,t:"War of the Vikings",                  g:"RTS",       y:2014},
+/* ── Turn-Based Strategy ── */
+{id:289070,t:"Civilization VI",                     g:"Turn-Based",y:2016},
+{id:8930,  t:"Civilization V",                      g:"Turn-Based",y:2010},
+{id:65980, t:"Worms Reloaded",                      g:"Turn-Based",y:2010},
+{id:723220,t:"Worms W.M.D",                         g:"Turn-Based",y:2016},
+{id:105450,t:"Warlock: Master of the Arcane",       g:"Turn-Based",y:2012},
+{id:1136510,t:"Warhammer 40K: Battlesector",        g:"Turn-Based",y:2021},
+{id:752060,t:"Battletech",                          g:"Turn-Based",y:2018},
+/* ── Grand Strategy ── */
+{id:282010,t:"Crusader Kings II",                   g:"Grand Strat",y:2012},
+{id:203770,t:"Crusader Kings III",                  g:"Grand Strat",y:2020},
+{id:236850,t:"Europa Universalis IV",               g:"Grand Strat",y:2013},
+{id:233150,t:"Hearts of Iron IV",                   g:"Grand Strat",y:2016},
+{id:281990,t:"Stellaris",                           g:"Grand Strat",y:2016},
+/* ── Action RPG ── */
+{id:1086940,t:"Baldur's Gate 3",                    g:"Action RPG",y:2023},
+{id:1245620,t:"Elden Ring",                         g:"Action RPG",y:2022},
+{id:374320,t:"Dark Souls III",                      g:"Action RPG",y:2016},
+{id:570940,t:"Dark Souls: Remastered",              g:"Action RPG",y:2018},
+{id:335300,t:"Dark Souls II: Scholar",              g:"Action RPG",y:2015},
+{id:814380,t:"Sekiro: Shadows Die Twice",           g:"Action RPG",y:2019},
+{id:231430,t:"Divinity: Original Sin",              g:"Action RPG",y:2014},
+{id:435150,t:"Divinity: Original Sin 2",            g:"Action RPG",y:2017},
+{id:1238840,t:"Baldur's Gate II: Enhanced Edition", g:"Action RPG",y:2013},
+{id:95400, t:"Orcs Must Die!",                      g:"Action RPG",y:2011},
+{id:224970,t:"Orcs Must Die! 2",                    g:"Action RPG",y:2012},
+{id:41500, t:"Torchlight",                          g:"Action RPG",y:2009},
+{id:200710,t:"Torchlight II",                       g:"Action RPG",y:2012},
+{id:1097190,t:"Diablo II: Resurrected",             g:"Action RPG",y:2021},
+{id:553010,t:"Victor Vran",                         g:"Action RPG",y:2015},
+{id:736220,t:"Outward",                             g:"Action RPG",y:2019},
+{id:42910, t:"Magicka",                             g:"Action RPG",y:2011},
+{id:302550,t:"Magicka 2",                           g:"Action RPG",y:2015},
+{id:365450,t:"Sword Coast Legends",                 g:"Action RPG",y:2015},
+/* ── MMORPG (Steam Massively Multiplayer genre only) ── */
+{id:39210, t:"Path of Exile",                       g:"MMORPG",    y:2013},
+{id:230410,t:"Neverwinter",                         g:"MMORPG",    y:2013},
+{id:332020,t:"Skyforge",                            g:"MMORPG",    y:2015},
+{id:261560,t:"ArcheAge",                            g:"MMORPG",    y:2014},
+{id:418290,t:"Tera",                                g:"MMORPG",    y:2012},
+{id:253250,t:"Trove",                               g:"MMORPG",    y:2015},
+{id:350470,t:"Riders of Icarus",                    g:"MMORPG",    y:2016},
+{id:312680,t:"Blade & Soul",                        g:"MMORPG",    y:2016},
+/* ── Survival ── */
+{id:108600,t:"Project Zomboid",                     g:"Survival",  y:2013},
+{id:251570,t:"7 Days to Die",                       g:"Survival",  y:2013},
+{id:322330,t:"Don't Starve Together",               g:"Survival",  y:2015},
+{id:892970,t:"Valheim",                             g:"Survival",  y:2021},
+{id:304050,t:"The Forest",                          g:"Survival",  y:2014},
+{id:1289310,t:"Sons of the Forest",                 g:"Survival",  y:2023},
+{id:378290,t:"Conan Exiles",                        g:"Survival",  y:2017},
+{id:346110,t:"ARK: Survival Evolved",               g:"Survival",  y:2015},
+{id:686810,t:"Astroneer",                           g:"Survival",  y:2016},
+{id:323190,t:"Stranded Deep",                       g:"Survival",  y:2015},
+{id:774861,t:"Eco",                                 g:"Survival",  y:2018},
+{id:648800,t:"Raft",                                g:"Survival",  y:2018},
+{id:552990,t:"Green Hell",                          g:"Survival",  y:2019},
+{id:413150,t:"Stardew Valley",                      g:"Survival",  y:2016},
+{id:490540,t:"The Long Dark",                       g:"Survival",  y:2017},
+{id:1604030,t:"V Rising",                           g:"Survival",  y:2022},
+{id:1174180,t:"Rust",                               g:"Survival",  y:2013},
+{id:848450,t:"Subnautica: Below Zero",              g:"Survival",  y:2021},
+{id:990080,t:"Icarus",                              g:"Survival",  y:2021},
+{id:1063730,t:"Grounded",                           g:"Survival",  y:2020},
+{id:1169040,t:"Core Keeper",                        g:"Survival",  y:2022},
+/* ── Top-Down Shooter ── */
+{id:115310,t:"Alien Swarm: Reactive Drop",          g:"Top-Down",  y:2016},
+{id:209790,t:"Awesomenauts",                        g:"Top-Down",  y:2012},
+{id:231160,t:"Hammerwatch",                         g:"Top-Down",  y:2013},
+{id:677140,t:"Hammerwatch II",                      g:"Top-Down",  y:2023},
+{id:252750,t:"Dungeon of the Endless",              g:"Top-Down",  y:2014},
+{id:252570,t:"Forced",                              g:"Top-Down",  y:2013},
+{id:49800, t:"Magicka: Wizard Wars",                g:"Top-Down",  y:2014},
+{id:230230,t:"SpeedRunners",                        g:"Top-Down",  y:2013},
+{id:113020,t:"Monaco: What's Yours Is Mine",        g:"Top-Down",  y:2013},
+{id:367520,t:"Enter the Gungeon",                   g:"Top-Down",  y:2016},
+{id:476600,t:"Full Metal Furies",                   g:"Top-Down",  y:2017},
+/* ── Co-op Adventure ── */
+{id:620,   t:"Portal 2",                            g:"Co-op Adv", y:2011},
+{id:476160,t:"Human: Fall Flat",                    g:"Co-op Adv", y:2016},
+{id:368340,t:"Keep Talking and Nobody Explodes",    g:"Co-op Adv", y:2015},
+{id:35720, t:"Trine",                               g:"Co-op Adv", y:2009},
+{id:35980, t:"Trine 2",                             g:"Co-op Adv", y:2011},
+{id:391100,t:"Trine 4",                             g:"Co-op Adv", y:2019},
+{id:287490,t:"Screencheat",                         g:"Co-op Adv", y:2014},
+{id:317400,t:"Stick Fight: The Game",               g:"Co-op Adv", y:2017},
+{id:1426600,t:"It Takes Two",                       g:"Co-op Adv", y:2021},
+{id:945360,t:"Pummel Party",                        g:"Co-op Adv", y:2018},
+{id:304700,t:"The Escapists",                       g:"Co-op Adv", y:2015},
+{id:641990,t:"The Escapists 2",                     g:"Co-op Adv", y:2017},
+/* ── Horror Co-op ── */
+{id:739630,t:"Phasmophobia",                        g:"Horror",    y:2020},
+{id:1172830,t:"Forewarned",                         g:"Horror",    y:2021},
+{id:1509950,t:"Devour",                             g:"Horror",    y:2021},
+{id:1556380,t:"Demonologist",                       g:"Horror",    y:2023},
+{id:381660,t:"Deceit",                              g:"Horror",    y:2017},
+/* ── Roguelite ── */
+{id:632360,t:"Risk of Rain 2",                      g:"Roguelite", y:2019},
+{id:1151340,t:"Hades",                              g:"Roguelite", y:2020},
+{id:860490,t:"Vampire Survivors",                   g:"Roguelite", y:2022},
+{id:646570,t:"Slay the Spire",                      g:"Roguelite", y:2019},
+{id:1643720,t:"Cult of the Lamb",                   g:"Roguelite", y:2022},
+{id:1122900,t:"Noita",                              g:"Roguelite", y:2020},
+{id:1672970,t:"Dome Keeper",                        g:"Roguelite", y:2022},
+/* ── Party / Social ── */
+{id:1091500,t:"Among Us",                           g:"Party",     y:2018},
+{id:753640,t:"Jackbox Party Pack",                  g:"Party",     y:2014},
+{id:401730,t:"Jackbox Party Pack 2",                g:"Party",     y:2015},
+{id:434170,t:"Jackbox Party Pack 3",                g:"Party",     y:2016},
+{id:610180,t:"Jackbox Party Pack 4",                g:"Party",     y:2017},
+{id:1007650,t:"Jackbox Party Pack 6",               g:"Party",     y:2019},
+{id:286160,t:"Ultimate Chicken Horse",              g:"Party",     y:2016},
+{id:1097930,t:"Fall Guys",                          g:"Party",     y:2020},
+/* ── Battle Royale ── */
+{id:1449850,t:"Naraka: Bladepoint",                 g:"Battle Royale",y:2021},
+/* ── Sandbox ── */
+{id:4000,  t:"Garry's Mod",                         g:"Sandbox",   y:2006},
+{id:105600,t:"Terraria",                            g:"Sandbox",   y:2011},
+{id:1080670,t:"Satisfactory",                       g:"Sandbox",   y:2019},
+{id:314660,t:"Space Engineers",                     g:"Sandbox",   y:2013},
+{id:977900,t:"Satisfactory",                        g:"Sandbox",   y:2019},
+/* ── Extraction Shooter ── */
+{id:1029690,t:"Hunt: Showdown 1896",                g:"Extraction",y:2023},
+{id:221100,t:"DayZ",                                g:"Extraction",y:2013},
+/* ── Naval / Pirate ── */
+{id:247730,t:"Blackwake",                           g:"Naval",     y:2017},
+{id:263730,t:"Anno 1800",                           g:"Naval",     y:2019},
+/* ── Sports ── */
+{id:1263850,t:"eFootball 2024",                     g:"Sports",    y:2021},
+{id:433850,t:"Football Manager 2017",               g:"Sports",    y:2016},
+{id:1263950,t:"Football Manager 2021",              g:"Sports",    y:2020},
+{id:1263960,t:"Football Manager 2022",              g:"Sports",    y:2021},
+{id:1235140,t:"TopSpin 2K25",                       g:"Sports",    y:2024},
+{id:1089810,t:"Tennis World Tour 2",                g:"Sports",    y:2020},
+{id:863550,t:"F1 2019",                             g:"Sports",    y:2019},
+{id:929290,t:"F1 2020",                             g:"Sports",    y:2020},
+{id:1259970,t:"F1 2021",                            g:"Sports",    y:2021},
+/* ── Simulation ── */
+{id:244210,t:"Kerbal Space Program",                g:"Simulation",y:2015},
+{id:227300,t:"Euro Truck Simulator 2",              g:"Simulation",y:2012},
+{id:270910,t:"American Truck Simulator",            g:"Simulation",y:2016},
+{id:975370,t:"Microsoft Flight Simulator 2020",     g:"Simulation",y:2020},
+{id:1250750,t:"PowerWash Simulator",               g:"Simulation",y:2022},
+];
+var _dedup={};GAMES=GAMES.filter(function(g){var k=g.id+"|"+g.g;if(_dedup[k])return false;_dedup[k]=true;return true;});
+
+function buildGenreFilter(){
+  var genres=["All",...new Set(GAMES.map(function(g){return g.g;}))].sort();
+  document.getElementById("genreFilter").innerHTML=genres.map(function(g){
+    var cnt=g==="All"?GAMES.length:GAMES.filter(function(x){return x.g===g;}).length;
+    return'<button class="gf-btn'+(g===activeGenre?" on":"")+'\" onclick="setGenre(\''+esc(g)+'\')">'+esc(g)+(g==="All"?" ("+GAMES.length+")":" "+cnt)+'</button>';
+  }).join("");
+}
+function setGenre(g){activeGenre=g;buildGenreFilter();renderCountTable();}
+function sortCounts(c){if(countSortCol===c)countSortDir*=-1;else{countSortCol=c;countSortDir=c==="count"?-1:1;}renderCountTable();}
+
+function renderCountTable(){
+  var q=(document.getElementById("countSearch").value||"").toLowerCase();
+  var rows=GAMES.filter(function(g){
+    if(activeGenre!=="All"&&g.g!==activeGenre)return false;
+    if(q&&!g.t.toLowerCase().includes(q)&&!g.g.toLowerCase().includes(q)&&!String(g.y).includes(q))return false;
+    return true;
+  });
+  rows.sort(function(a,b){
+    if(countSortCol==="count")return countSortDir*((liveCounts[b.id]||0)-(liveCounts[a.id]||0));
+    if(countSortCol==="year")return countSortDir*(b.y-a.y);
+    if(countSortCol==="title")return countSortDir*a.t.localeCompare(b.t);
+    return 0;
+  });
+  setBadge("counts",GAMES.length);
+  var html=rows.map(function(g){
+    var n=liveCounts[g.id];var isLive=fetchState[g.id]==="live";var isPending=!fetchState[g.id];
+    var f=n!=null?(n>=1000000?(n/1000000).toFixed(1)+"M":n>=1000?(n/1000).toFixed(1)+"k":n.toLocaleString()):null;
+    var noProxy=fetchState[g.id]==="no-proxy";
+    var cc=isPending?'<span class="cnt-loading"></span>'
+      :noProxy?'<span class="cnt vlo" title="Set PROXY_URL in index.html to see counts">set proxy</span>'
+      :isLive?'<span class="cnt '+(n>=5000?"hi":n>=500?"md":n>=50?"lo":"vlo")+'">'+f+'</span><span class="cnt-lbl">playing now</span>'
+      :'<span class="cnt vlo">—</span>';
+    return'<tr><td><div class="pc-title">'+esc(g.t)+'</div></td><td><span class="badge badge-gray">'+esc(g.g)+'</span></td><td class="pc-year">'+g.y+'</td><td style="text-align:right">'+cc+'</td><td><button class="btn btn-ghost btn-xs" onclick="goLFG('+JSON.stringify(g.t)+')">LFG ↗</button></td></tr>';
+  }).join("");
+  document.getElementById("countBody").innerHTML=html||'<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text3);font-size:13px">No games match</td></tr>';
+}
+
+/*
+  ══════════════════════════════════════════════════════════════
+  LIVE PLAYER COUNTS — via Anthropic API (no proxy needed)
+  ──────────────────────────────────────────────────────────────
+  Uses the Anthropic web_search tool, which runs server-side on
+  Anthropic's infrastructure and can fetch Steam's API directly,
+  bypassing browser CORS completely. No API key required — the
+  browser's existing Anthropic session handles auth automatically.
+
+  Counts load in batches of 5. ~90 games takes ~25 seconds total.
+  Once cached they persist until the next manual refresh.
+  ══════════════════════════════════════════════════════════════
+*/
+var fetchingCounts = false;
+
+async function refreshCounts() {
+  if (fetchingCounts) return;
+  fetchingCounts = true;
+
+  var btn = document.getElementById("refreshCountBtn");
+  btn.innerHTML = '<span class="spin">↻</span> Live';
+  btn.disabled = true;
+
+  var PROXY = "https://young-sun-ff88.thomasorth91.workers.dev";
+  var ids = [...new Set(GAMES.map(function(g){ return g.id; }))];
+  var done = 0, succeeded = 0;
+
+  setProgText("Fetching live counts…");
+
+  for (var b = 0; b < ids.length; b += 50) {
+    var slice = ids.slice(b, b + 50);
+    try {
+      var r = await fetch(PROXY + "?ids=" + slice.join(","), { signal: AbortSignal.timeout(15000) });
+      if (r.ok) {
+        var data = await r.json();
+        if (data.results) {
+          Object.entries(data.results).forEach(function(e) {
+            liveCounts[parseInt(e[0])] = e[1];
+            fetchState[parseInt(e[0])] = "live";
+            succeeded++;
+          });
+          slice.forEach(function(id){ if(!fetchState[id]) fetchState[id] = "err"; });
+        }
+      }
+    } catch(e) {
+      slice.forEach(function(id){ fetchState[id] = "err"; });
+    }
+    done += slice.length;
+    document.getElementById("progFill").style.width = Math.round(done / ids.length * 100) + "%";
+    setProgText(done + "/" + ids.length + " · " + succeeded + " live");
+    renderCountTable();
+    updateHeaderStats();
+  }
+
+  fetchingCounts = false;
+  btn.disabled = false;
+  btn.innerHTML = "↻ Refresh";
+  var t = new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+  setProgText(succeeded + " live · Updated " + t);
+}
+
+function setProgText(s) {
+  document.getElementById("progText").textContent = s;
+}
+
+function updateHeaderStats() {
+  var total = Object.values(liveCounts).reduce(function(a, b){ return a + b; }, 0);
+  if (total > 0) {
+    var f = total >= 1000000 ? (total/1000000).toFixed(1) + "M"
+          : total >= 1000    ? (total/1000).toFixed(1) + "k"
+          : total.toString();
+    document.getElementById("navOnline").textContent = f;
+    document.getElementById("heroOnline").textContent = f;
+  }
+}
+
+function goLFG(name){showView("lfg");document.getElementById("lfgGames").value=name;document.getElementById("lfgGames").focus();}
+function relTime(ts){var d=Date.now()-new Date(ts).getTime(),s=Math.floor(d/1000),m=Math.floor(s/60),hr=Math.floor(m/60);if(s<10)return"just now";if(s<60)return s+"s ago";if(m<60)return m+"m ago";if(hr<24)return hr+"h ago";return Math.floor(hr/24)+"d ago";}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+function bootApp(){
+  try{
+    document.getElementById("heroGames").textContent=GAMES.length;
+    renderIdentity();
+    buildGenreFilter();
+    loadLFG();
+    if(!myName)setTimeout(openModal,900);
+    /* Show Supabase status in nav */
+    var pill = document.getElementById("navOnline").closest ? document.getElementById("navOnline") : null;
+    if(sb){ console.log("✅ Supabase ready — posts will be shared across all users"); }
+    else{ console.warn("⚠️ Supabase not connected — posts saved locally only"); }
+    setInterval(function(){try{if(document.getElementById("view-chat").classList.contains("on"))loadChat();}catch(e){}},8000);
+    setInterval(function(){try{if(document.getElementById("view-lfg").classList.contains("on"))loadLFG();}catch(e){}},15000);
+    setInterval(function(){try{if(document.getElementById("view-counts").classList.contains("on"))refreshCounts();}catch(e){}},120000);
+  }catch(e){console.error("Boot error:",e);}
+}
+
+/* Start — init Supabase first, then boot */
+initSupabase();
+setInterval(refreshCounts,120000);
+</script>
+</body>
+</html>
